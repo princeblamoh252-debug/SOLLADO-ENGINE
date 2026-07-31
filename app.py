@@ -46,4 +46,4 @@ def predict(home_name, away_name):
     with st.spinner(f'Fetching {home_name} data...'):
         H = get_last5_stats(find_team_url(home_name))
     with st.spinner(f'Fetching {away_name} data...'):
-        A = get_last5_stats(find_team_url(away
+        A = get_last5_stats(find_team_url(away))
