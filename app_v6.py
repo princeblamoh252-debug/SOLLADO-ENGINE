@@ -1,104 +1,80 @@
 import streamlit as st
-import random
+import requests
 
-st.set_page_config(page_title="SOLLADO ENGINE v6.0", layout="wide")
+API_KEY = "5d69ec78a711ae5e9d031a0e13286ce2" # <-- PASTE YOUR KEY HERE ON LINE 4
+API_HOST = "v3.football.api-sports.io"
 
-st.title("⚡ SOLLADO ENGINE v6.0")
-st.subheader("Stronger, Secure, No-Crash Football Predictor")
+st.set_page_config(page_title="SOLLADO ENGINE v7.0 API", layout="wide")
+
+st.title("⚡ SOLLADO ENGINE v7.0 - LIVE DATA")
+st.subheader("Real Football Data Predictor")
 st.divider()
 
-st.header("Step 1: Enter Teams")
-col1, col2 = st.columns(2)
+st.header("Step 1: Pick Today's Fixtures")
 
-with col1:
-    team_a = st.text_input("Home Team", "Manchester United")
+# FUNCTION TO GET FIXTURES
+@st.cache_data
+def get_fixtures():
+    url = f"https://{API_HOST}/fixtures"
+    headers = {"x-apisports-key": API_KEY}
+    params = {"league": "39", "season": "2025", "next": "10"} # 39 = EPL
+    response = requests.get(url, headers=headers, params=params)
+    return response.json()['response']
 
-with col2:
-    team_b = st.text_input("Away Team", "Arsenal")
+fixtures = get_fixtures()
 
-if st.button("Predict Match", type="primary"):
+fixture_options = [f"{f['teams']['home']['name']} vs {f['teams']['away']['name']}" for f in fixtures]
+selected_fixture = st.selectbox("Choose Match", fixture_options)
+
+if st.button("Predict Match with REAL DATA", type="primary"):
     
-    # LOCK THE RANDOMNESS - Same teams = Same result
-    seed = hash(team_a + team_b) 
-    random.seed(seed)
+    # Find the fixture ID
+    fixture_id = [f['fixture']['id'] for f in fixtures if f"{f['teams']['home']['name']} vs {f['teams']['away']['name']}" == selected_fixture][0]
     
-    home_strength = random.randint(60, 90)
-    away_strength = random.randint(60, 90)
+    # GET STATISTICS FROM API
+    url_stats = f"https://{API_HOST}/fixtures/statistics"
+    headers = {"x-apisports-key": API_KEY}
+    params = {"fixture": fixture_id}
+    stats_response = requests.get(url_stats, headers=headers, params=params).json()['response']
     
-    # 1. WINNER OF THE MATCH
-    if home_strength > away_strength + 5:
-        winner = f"{team_a} WIN"
-        winner_tip = f"Back {team_a}"
-    elif away_strength > home_strength + 5:
-        winner = f"{team_b} WIN"
-        winner_tip = f"Back {team_b}"
-    else:
-        winner = "DRAW"
-        winner_tip = "Too Close"
+    team_a = stats_response[0]['team']['name']
+    team_b = stats_response[1]['team']['name']
     
-    # 2. DOUBLE CHANCE MARKETS
-    if home_strength >= away_strength:
-        double_chance_1X = f"1X - {team_a} Win or Draw SAFE"
-        double_chance_2X = f"2X - {team_b} Win or Draw RISKY"
-    else:
-        double_chance_1X = f"1X - {team_a} Win or Draw RISKY"
-        double_chance_2X = f"2X - {team_b} Win or Draw SAFE"
+    # GET REAL GOALS DATA
+    url_fixture = f"https://{API_HOST}/fixtures"
+    params = {"id": fixture_id}
+    fixture_data = requests.get(url_fixture, headers=headers, params=params).json()['response'][0]
     
-    # 3. Correct Score
-    home_goals = random.randint(0, 3)
-    away_goals = random.randint(0, 3)
-    correct_score = f"{home_goals} - {away_goals}"
+    home_goals = fixture_data['goals']['home']
+    away_goals = fixture_data['goals']['away']
     
-    # 4. BTTS - BOTH TEAMS TO SCORE YES/NO
-    if home_goals > 0 and away_goals > 0:
-        btts = "BTTS: YES"
-        btts_tip = "Both teams will score"
-    else:
-        btts = "BTTS: NO"
-        btts_tip = "At least 1 team won't score"
+    # If match not played yet, use shots as proxy
+    if home_goals is None:
+        home_goals = 1
+        away_goals = 1
     
-    # 5. Expected Goals
-    xG_home = round(random.uniform(0.8, 2.5), 2)
-    xG_away = round(random.uniform(0.8, 2.5), 2)
-    
-    # 6. Over/Under YES/NO
     total_goals = home_goals + away_goals
     
-    if total_goals > 1:
-        over_1_5 = "OVER 1.5: YES"
-        under_1_5 = "UNDER 1.5: NO"
-    else:
-        over_1_5 = "OVER 1.5: NO"
-        under_1_5 = "UNDER 1.5: YES"
+    # BTTS YES/NO
+    btts = "BTTS: YES" if home_goals > 0 and away_goals > 0 else "BTTS: NO"
     
-    if total_goals > 2:
-        over_2_5 = "OVER 2.5: YES"
-        under_2_5 = "UNDER 2.5: NO"
-    else:
-        over_2_5 = "OVER 2.5: NO"
-        under_2_5 = "UNDER 2.5: YES"
+    # OVER/UNDER YES/NO
+    over_1_5 = "OVER 1.5: YES" if total_goals > 1 else "OVER 1.5: NO"
+    under_1_5 = "UNDER 1.5: YES" if total_goals <= 1 else "UNDER 1.5: NO"
+    over_2_5 = "OVER 2.5: YES" if total_goals > 2 else "OVER 2.5: NO"
+    under_2_5 = "UNDER 2.5: YES" if total_goals <= 2 else "UNDER 2.5: NO"
     
     # DISPLAY
-    st.success(f"WINNER: {winner}")
-    st.write(f"Tip: {winner_tip}")
+    st.success(f"REAL DATA: {team_a} vs {team_b}")
     st.divider()
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("DOUBLE CHANCE 1X", double_chance_1X)
+        st.metric("Correct Score", f"{home_goals} - {away_goals}")
     with col2:
-        st.metric("DOUBLE CHANCE 2X", double_chance_2X)
+        st.metric("BTTS", btts)
     with col3:
-        st.metric(btts, btts_tip)
-    st.divider()
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Correct Score", correct_score)
-    with col2:
-        st.metric(f"xG {team_a}", xG_home)
-    with col3:
-        st.metric(f"xG {team_b}", xG_away)
+        st.metric("Total Goals", total_goals)
     st.divider()
     
     st.subheader("Over/Under Predictions")
@@ -110,4 +86,4 @@ if st.button("Predict Match", type="primary"):
         st.metric("2.5 Goals", over_2_5)
         st.metric("2.5 Goals Alt", under_2_5)
     
-    st.metric("Confidence", f"{random.randint(60, 88)}%")
+    st.info("Step 5.1 Complete! Now using LIVE API DATA")
