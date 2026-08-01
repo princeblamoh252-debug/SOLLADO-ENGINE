@@ -18,12 +18,14 @@ with col2:
 
 if st.button("Predict Match", type="primary"):
     
+    # LOCK THE RANDOMNESS - Same teams = Same result
     seed = hash(team_a + team_b) 
     random.seed(seed)
     
     home_strength = random.randint(60, 90)
     away_strength = random.randint(60, 90)
     
+    # 1. WINNER OF THE MATCH
     if home_strength > away_strength + 5:
         winner = f"{team_a} WIN"
         winner_tip = f"Back {team_a}"
@@ -34,6 +36,7 @@ if st.button("Predict Match", type="primary"):
         winner = "DRAW"
         winner_tip = "Too Close"
     
+    # 2. DOUBLE CHANCE MARKETS
     if home_strength >= away_strength:
         double_chance_1X = f"1X - {team_a} Win or Draw SAFE"
         double_chance_2X = f"2X - {team_b} Win or Draw RISKY"
@@ -41,10 +44,12 @@ if st.button("Predict Match", type="primary"):
         double_chance_1X = f"1X - {team_a} Win or Draw RISKY"
         double_chance_2X = f"2X - {team_b} Win or Draw SAFE"
     
+    # 3. Correct Score
     home_goals = random.randint(0, 3)
     away_goals = random.randint(0, 3)
     correct_score = f"{home_goals} - {away_goals}"
     
+    # 4. BTTS - BOTH TEAMS TO SCORE YES/NO
     if home_goals > 0 and away_goals > 0:
         btts = "BTTS: YES"
         btts_tip = "Both teams will score"
@@ -52,13 +57,28 @@ if st.button("Predict Match", type="primary"):
         btts = "BTTS: NO"
         btts_tip = "At least 1 team won't score"
     
+    # 5. Expected Goals
     xG_home = round(random.uniform(0.8, 2.5), 2)
     xG_away = round(random.uniform(0.8, 2.5), 2)
     
+    # 6. Over/Under YES/NO
     total_goals = home_goals + away_goals
-    over_1_5 = "OVER 1.5" if total_goals > 1 else "UNDER 1.5"
-    over_2_5 = "OVER 2.5" if total_goals > 2 else "UNDER 2.5"
     
+    if total_goals > 1:
+        over_1_5 = "OVER 1.5: YES"
+        under_1_5 = "UNDER 1.5: NO"
+    else:
+        over_1_5 = "OVER 1.5: NO"
+        under_1_5 = "UNDER 1.5: YES"
+    
+    if total_goals > 2:
+        over_2_5 = "OVER 2.5: YES"
+        under_2_5 = "UNDER 2.5: NO"
+    else:
+        over_2_5 = "OVER 2.5: NO"
+        under_2_5 = "UNDER 2.5: YES"
+    
+    # DISPLAY
     st.success(f"WINNER: {winner}")
     st.write(f"Tip: {winner_tip}")
     st.divider()
@@ -79,6 +99,15 @@ if st.button("Predict Match", type="primary"):
         st.metric(f"xG {team_a}", xG_home)
     with col3:
         st.metric(f"xG {team_b}", xG_away)
+    st.divider()
     
-    st.write(f"Over/Under: {over_1_5} | {over_2_5}")
+    st.subheader("Over/Under Predictions")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("1.5 Goals", over_1_5)
+        st.metric("1.5 Goals Alt", under_1_5)
+    with col2:
+        st.metric("2.5 Goals", over_2_5)
+        st.metric("2.5 Goals Alt", under_2_5)
+    
     st.metric("Confidence", f"{random.randint(60, 88)}%")
