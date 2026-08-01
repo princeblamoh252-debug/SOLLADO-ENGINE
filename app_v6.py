@@ -22,32 +22,50 @@ if st.button("Predict Match", type="primary"):
     home_strength = random.randint(60, 90)
     away_strength = random.randint(60, 90)
     
-    # 1. Win/Draw/Loss
+    # 1. WINNER OF THE MATCH
     if home_strength > away_strength + 5:
-        result = f"Home Win - {team_a} likely to win"
-        likely_winner = team_a
+        winner = f"{team_a} WIN"
+        winner_tip = f"✅ Back {team_a}"
     elif away_strength > home_strength + 5:
-        result = f"Away Win - {team_b} likely to win"
-        likely_winner = team_b
+        winner = f"{team_b} WIN"
+        winner_tip = f"✅ Back {team_b}"
     else:
-        result = "Draw - Very close match"
-        likely_winner = "Draw"
+        winner = "DRAW"
+        winner_tip = "⚠️ Avoid Winner Market - Too Close"
     
-    # 2. Correct Score
+    # 2. DOUBLE CHANCE MARKETS
+    if home_strength >= away_strength:
+        double_chance_1X = f"1X - {team_a} Win or Draw ✅ SAFE"
+        double_chance_2X = f"2X - {team_b} Win or Draw ❌ RISKY"
+    else:
+        double_chance_1X = f"1X - {team_a} Win or Draw ❌ RISKY"
+        double_chance_2X = f"2X - {team_b} Win or Draw ✅ SAFE"
+    
+    # 3. Correct Score
     home_goals = random.randint(0, 3)
     away_goals = random.randint(0, 3)
     correct_score = f"{home_goals} - {away_goals}"
     
-    # 3. Expected Goals
+    # 4. Expected Goals
     xG_home = round(random.uniform(0.8, 2.5), 2)
     xG_away = round(random.uniform(0.8, 2.5), 2)
     
-    # 4. Over/Under
+    # 5. Over/Under
     total_goals = home_goals + away_goals
     over_1_5 = "OVER 1.5 ✅" if total_goals > 1 else "UNDER 1.5 ❌"
     over_2_5 = "OVER 2.5 ✅" if total_goals > 2 else "UNDER 2.5 ❌"
     
-    st.success(f"🎯 RESULT: {result}")
+    # DISPLAY
+    st.success(f"🏆 WINNER: {winner}")
+    st.write(f"**Tip:** {winner_tip}")
+    st.divider()
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("DOUBLE CHANCE 1X", double_chance_1X)
+    with col2:
+        st.metric("DOUBLE CHANCE 2X", double_chance_2X)
+    st.divider()
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -60,4 +78,4 @@ if st.button("Predict Match", type="primary"):
     st.write(f"**Over/Under:** {over_1_5} | {over_2_5}")
     st.metric("Confidence", f"{random.randint(60, 88)}%")
     
-    st.info("Step 4.5 Complete! Next we add real data with API")
+    st.info("Step 4.6 Complete! Ready for real API data")
