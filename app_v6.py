@@ -38,4 +38,4 @@ if st.button("Predict Match", type="primary"):
     
     # 2. DOUBLE CHANCE MARKETS
     if home_strength >= away_strength:
-        double_chance_1X = f"1X - {team_a
+        double_chance_1X = f"1X - {team_a} Win or Draw ✅ SAFE"
